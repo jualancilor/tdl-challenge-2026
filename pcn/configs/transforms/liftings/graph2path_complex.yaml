@@ -1,0 +1,12 @@
+transform_type: 'lifting'
+transform_name: "PathComplexLifting"
+# The rank of a path cell equals its path length, so the dimension of the
+# lifted complex (complex_dim, read by infer_in_channels) must equal
+# max_path_length. The lifting enforces complex_dim = max_path_length.
+complex_dim: 2
+max_path_length: 2
+signed: False
+feature_lifting: ${oc.select:model.feature_encoder.feature_lifting,ProjectionSum}
+# Required for all liftings to make the pipeline executable
+preserve_edge_attr: ${oc.select:dataset.parameters.preserve_edge_attr_if_lifted,False}
+neighborhoods: ${oc.select:model.backbone.neighborhoods,${oc.select:model.preprocessing_params.neighborhoods,null}}

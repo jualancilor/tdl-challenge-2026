@@ -1,0 +1,119 @@
+diff --git a/topobench/nn/backbones/__init__.py b/topobench/nn/backbones/__init__.py
+index 3718717..ff36806 100644
+--- a/topobench/nn/backbones/__init__.py
++++ b/topobench/nn/backbones/__init__.py
+@@ -1,6 +1,7 @@
+ """Some models implemented for TopoBenchX with automated exports."""
+ 
+ import inspect
++import sys
+ from importlib import util
+ from pathlib import Path
+ from typing import Any
+@@ -56,6 +57,11 @@ class ModelExportsManager:
+                     spec = util.spec_from_file_location(module_name, file_path)
+                     if spec and spec.loader:
+                         module = util.module_from_spec(spec)
++                        # Register the module so that tooling resolving
++                        # type hints through sys.modules (e.g. the
++                        # torch_geometric MessagePassing inspector) can
++                        # find the module the classes were defined in.
++                        sys.modules[module_name] = module
+                         spec.loader.exec_module(module)
+ 
+                         new_models = {
+diff --git a/topobench/nn/backbones/cell/__init__.py b/topobench/nn/backbones/cell/__init__.py
+index 9d815f1..00cca9b 100644
+--- a/topobench/nn/backbones/cell/__init__.py
++++ b/topobench/nn/backbones/cell/__init__.py
+@@ -1,6 +1,7 @@
+ """Cell backbones with automated exports."""
+ 
+ import inspect
++import sys
+ from importlib import util
+ from pathlib import Path
+ from typing import Any
+@@ -54,6 +55,11 @@ class BackboneExportsManager:
+             spec = util.spec_from_file_location(module_name, file_path)
+             if spec and spec.loader:
+                 module = util.module_from_spec(spec)
++                # Register the module so that tooling resolving type
++                # hints through sys.modules (e.g. the torch_geometric
++                # MessagePassing inspector) can find the module the
++                # classes were defined in.
++                sys.modules[module_name] = module
+                 spec.loader.exec_module(module)
+ 
+                 new_backbones = {
+diff --git a/topobench/transforms/__init__.py b/topobench/transforms/__init__.py
+index 862dcbe..a76b0d0 100755
+--- a/topobench/transforms/__init__.py
++++ b/topobench/transforms/__init__.py
+@@ -11,6 +11,9 @@ from topobench.transforms.liftings.graph2combinatorial import (
+ from topobench.transforms.liftings.graph2hypergraph import (
+     GRAPH2HYPERGRAPH_LIFTINGS,
+ )
++from topobench.transforms.liftings.graph2path_complex import (
++    GRAPH2PATH_COMPLEX_LIFTINGS,
++)
+ from topobench.transforms.liftings.graph2simplicial import (
+     GRAPH2SIMPLICIAL_LIFTINGS,
+ )
+@@ -30,6 +33,7 @@ from topobench.transforms.liftings.simplicial2combinatorial import (
+ LIFTINGS = {
+     **GRAPH2CELL_LIFTINGS,
+     **GRAPH2HYPERGRAPH_LIFTINGS,
++    **GRAPH2PATH_COMPLEX_LIFTINGS,
+     **GRAPH2SIMPLICIAL_LIFTINGS,
+     **POINTCLOUD2HYPERGRAPH_LIFTINGS,
+     **POINTCLOUD2SIMPLICIAL_LIFTINGS,
+diff --git a/topobench/transforms/liftings/__init__.py b/topobench/transforms/liftings/__init__.py
+index 4692cea..5e38b76 100755
+--- a/topobench/transforms/liftings/__init__.py
++++ b/topobench/transforms/liftings/__init__.py
+@@ -1,6 +1,10 @@
+ """This module implements the liftings for the topological transforms."""
+ 
+ from .base import AbstractLifting
++from .graph2path_complex import (
++    GRAPH2PATH_COMPLEX_LIFTINGS,
++    PathComplexLifting,
++)
+ from .liftings import (
+     CellComplexLifting,
+     CombinatorialLifting,
+@@ -11,11 +15,13 @@ from .liftings import (
+ )
+ 
+ __all__ = [
++    "GRAPH2PATH_COMPLEX_LIFTINGS",
+     "AbstractLifting",
+     "CellComplexLifting",
+     "CombinatorialLifting",
+     "GraphLifting",
+     "HypergraphLifting",
++    "PathComplexLifting",
+     "PointCloudLifting",
+     "SimplicialLifting",
+ ]
+diff --git a/topobench/utils/config_resolvers.py b/topobench/utils/config_resolvers.py
+index 670853d..3175b98 100644
+--- a/topobench/utils/config_resolvers.py
++++ b/topobench/utils/config_resolvers.py
+@@ -831,6 +831,7 @@ def infer_in_channels(dataset, transforms):
+         complex_transforms = [
+             # Default liftig configurations
+             "graph2cell_lifting",
++            "graph2path_complex_lifting",
+             "graph2simplicial_lifting",
+             "graph2combinatorial_lifting",
+             "graph2hypergraph_lifting",
+@@ -842,6 +843,7 @@ def infer_in_channels(dataset, transforms):
+             "hypergraph2combinatorial_lifting",
+             # Make it possible to run directly from the folder
+             "graph2cell",
++            "graph2path_complex",
+             "graph2simplicial",
+             "graph2combinatorial",
+             "graph2hypergraph",

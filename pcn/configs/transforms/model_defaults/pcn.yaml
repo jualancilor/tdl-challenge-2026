@@ -1,0 +1,2 @@
+defaults:
+  - /transforms/liftings@graph2path_complex_lifting: graph2path_complex

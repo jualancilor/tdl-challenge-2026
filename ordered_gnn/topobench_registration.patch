@@ -1,0 +1,48 @@
+diff --git a/topobench/nn/backbones/__init__.py b/topobench/nn/backbones/__init__.py
+index 3718717..ff36806 100644
+--- a/topobench/nn/backbones/__init__.py
++++ b/topobench/nn/backbones/__init__.py
+@@ -1,6 +1,7 @@
+ """Some models implemented for TopoBenchX with automated exports."""
+ 
+ import inspect
++import sys
+ from importlib import util
+ from pathlib import Path
+ from typing import Any
+@@ -56,6 +57,11 @@ class ModelExportsManager:
+                     spec = util.spec_from_file_location(module_name, file_path)
+                     if spec and spec.loader:
+                         module = util.module_from_spec(spec)
++                        # Register the module so that tooling resolving
++                        # type hints through sys.modules (e.g. the
++                        # torch_geometric MessagePassing inspector) can
++                        # find the module the classes were defined in.
++                        sys.modules[module_name] = module
+                         spec.loader.exec_module(module)
+ 
+                         new_models = {
+diff --git a/topobench/nn/backbones/graph/__init__.py b/topobench/nn/backbones/graph/__init__.py
+index 919796c..341a4f0 100644
+--- a/topobench/nn/backbones/graph/__init__.py
++++ b/topobench/nn/backbones/graph/__init__.py
+@@ -1,6 +1,7 @@
+ """Graph backbones with automated exports."""
+ 
+ import inspect
++import sys
+ from importlib import util
+ from pathlib import Path
+ from typing import Any
+@@ -54,6 +55,11 @@ class BackboneExportsManager:
+             spec = util.spec_from_file_location(module_name, file_path)
+             if spec and spec.loader:
+                 module = util.module_from_spec(spec)
++                # Register the module so that tooling resolving type
++                # hints through sys.modules (e.g. the torch_geometric
++                # MessagePassing inspector) can find the module the
++                # classes were defined in.
++                sys.modules[module_name] = module
+                 spec.loader.exec_module(module)
+ 
+                 new_backbones = {
